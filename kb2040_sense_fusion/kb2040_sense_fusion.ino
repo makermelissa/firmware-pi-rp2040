@@ -22,9 +22,7 @@
 
 /* Includes ---------------------------------------------------------------- */
 #include <Gesture-Hoodie_inferencing.h>
-#include <Adafruit_LSM6DS3TRC.h>
-
-Adafruit_LSM6DS3TRC lsm6ds3trc;
+#include <Arduino_LSM6DSOX.h>
 
 /** Struct to link sensor axis name to sensor value function */
 typedef struct{
@@ -46,12 +44,12 @@ float Ax, Ay, Az;
 float Gx, Gy, Gz;
 
 static bool ei_connect_fusion_list(const char *input_list);
-static float get_accX(void){return Ax;}
-static float get_accY(void){return Ay;}
-static float get_accZ(void){return Az;}
-static float get_gyrX(void){return Gx;}
-static float get_gyrY(void){return Gy;}
-static float get_gyrZ(void){return Gz;}
+static float get_accX(void){return Ax * CONVERT_G_TO_MS2;}
+static float get_accY(void){return Ay * CONVERT_G_TO_MS2;}
+static float get_accZ(void){return Az * CONVERT_G_TO_MS2;}
+static float get_gyrX(void){return Gx * CONVERT_G_TO_MS2;}
+static float get_gyrY(void){return Gy * CONVERT_G_TO_MS2;}
+static float get_gyrZ(void){return Gz * CONVERT_G_TO_MS2;}
 
 static int8_t fusion_sensors[NICLA_N_SENSORS];
 static int fusion_ix = 0;
@@ -84,19 +82,17 @@ void setup()
     }
 
     /* Init & start sensors */
-    if (!lsm6ds3trc.begin_I2C()) {
+    uint8_t acc_type = IMU.begin();
+    if (!acc_type) {
         ei_printf("Failed to initialize IMU!\r\n");
+        while (1);
     }
-    else {
-        ei_printf("IMU initialized\r\n");
+    else if (acc_type == 1) {
+        ei_printf("IMU initialized\r\nUsing LSM6DSOX\n");
     }
-
-    // Set up Gyro and Accelerometer to match the recorded settings
-    lsm6ds3trc.setGyroRange(LSM6DS_GYRO_RANGE_2000_DPS);
-    lsm6ds3trc.setGyroDataRate(LSM6DS_RATE_104_HZ);
-    
-    lsm6ds3trc.setAccelRange(LSM6DS_ACCEL_RANGE_2_G);
-    lsm6ds3trc.setAccelDataRate(LSM6DS_RATE_104_HZ);    
+    else if (acc_type == 2) {
+        ei_printf("IMU initialized\r\nUsing LSM6DS3\n");        
+    }
 }
 
 /**
@@ -234,13 +230,6 @@ static bool ei_connect_fusion_list(const char *input_list)
 }
 
 void update_sensors() {
-    sensors_event_t accel;
-    sensors_event_t gyro;
-    sensors_event_t temp;
-    Ax = accel.acceleration.x;
-    Ay = accel.acceleration.y;
-    Az = accel.acceleration.z;
-    Gx = gyro.gyro.x;
-    Gy = gyro.gyro.y;
-    Gz = gyro.gyro.z;
+  if (IMU.accelerationAvailable()) { IMU.readAcceleration(Ax, Ay, Az); }
+  if (IMU.gyroscopeAvailable()) { IMU.readGyroscope(Gx, Gy, Gz); }
 }
