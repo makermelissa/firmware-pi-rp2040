@@ -71,10 +71,16 @@ void setup()
         ei_printf("IMU initialized\r\n");
     }
 
-    if (EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME != 3) {
-        ei_printf("ERR: EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME should be equal to 3 (the 3 sensor axes)\n");
+    if (EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME != 6) {
+        ei_printf("ERR: EI_CLASSIFIER_RAW_SAMPLES_PER_FRAME should be equal to 6 (the 6 sensor axes)\n");
         return;
     }
+
+    // Set up Gyro and Accelerometer to match the recorded settings
+    lsm6ds3trc.setGyroRange(LSM6DS_GYRO_RANGE_2000_DPS);
+    lsm6ds3trc.setGyroDataRate(LSM6DS_RATE_104_HZ);
+    
+    lsm6ds3trc.setAccelRange(LSM6DS_ACCEL_RANGE_2_G);
     lsm6ds3trc.setAccelDataRate(LSM6DS_RATE_104_HZ);
 
     // Fill up the buffer
